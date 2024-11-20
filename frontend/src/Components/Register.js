@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Input, Button, Typography } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -8,6 +9,7 @@ const Register = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = async (values) => {
         try {
@@ -16,6 +18,7 @@ const Register = () => {
                 password: values.password,
             });
             console.log(response.data);
+            navigate('/login');
         } catch (error) {
             console.log(error);
             if (error.response && error.response.data) {
