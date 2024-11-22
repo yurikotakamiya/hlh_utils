@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -5,10 +7,14 @@ const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const { expressjwt: expressJwt } = require('express-jwt'); // Updated import
+const axios = require('axios');
+// const { marked } = require('marked');
+const MarkdownIt = require('markdown-it');
+const { htmlToText } = require('html-to-text');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const JWT_SECRET = 'your_jwt_secret'; // Replace with your own secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Replace with your own secret
 const tokenBlacklist = new Set();
 
 app.use(cors());
@@ -22,7 +28,7 @@ const pool = new Pool({
     port: 5432,
 });
 
-const authenticate = expressJwt({ secret: JWT_SECRET, algorithms: ['HS256'] }).unless({ path: ['/login', '/register'] });
+const authenticate = expressJwt({ secret: JWT_SECRET, algorithms: ['HS256'] }).unless({ path: ['/login', '/register', '/'] });
 
 app.use(authenticate);
 
@@ -66,6 +72,47 @@ app.post('/logout', (req, res) => {
     const token = req.headers.authorization.split(' ')[1];
     tokenBlacklist.add(token);
     res.status(200).json({ message: 'Logout successful' });
+});
+
+// ChatGPT API endpoint using GPT-4o
+app.post('/chat', async (req, res) => {
+    const userInput = req.body.message;
+
+    try {
+        console.log('Received request:', req.body);
+        console.log('Using OpenAI API Key:', process.env.OPENAI_API_KEY);
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: req.body.mode,
+                messages: [{ role: 'user', content: userInput }],
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+            }
+        );
+        
+        // Convert GPT's Markdown response to HTML using markdown-it
+        const md = new MarkdownIt();
+        const htmlMessage = md.render(response.data.choices[0].message.content);
+
+        // Convert HTML to plain text
+        const plainTextMessage = htmlToText(htmlMessage, {
+            wordwrap: false,
+            selectors: [
+                { selector: 'a', options: { ignoreHref: true } },
+                { selector: 'img', format: 'skip' }
+            ]
+        });
+
+        res.json({ message: plainTextMessage }); // Send HTML to frontend
+    } catch (error) {
+        console.error('Error communicating with OpenAI:', error.message);
+        res.status(500).json({ error: 'Failed to fetch response from OpenAI' });
+    }
 });
 
 app.use((err, req, res, next) => {
