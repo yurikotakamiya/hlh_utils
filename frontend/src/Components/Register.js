@@ -13,12 +13,12 @@ const Register = () => {
 
     const handleSubmit = async (values) => {
         try {
-            const response = await axios.post('http://localhost:5001/register', {
+            const response = await axios.post('http://localhost:8000/register', {
                 username: values.username,
                 password: values.password,
             });
             console.log(response.data);
-            navigate('/login');
+            navigate('/');
         } catch (error) {
             console.log(error);
             if (error.response && error.response.data) {

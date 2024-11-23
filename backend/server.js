@@ -12,7 +12,7 @@ const axios = require('axios');
 const MarkdownIt = require('markdown-it');
 const { htmlToText } = require('html-to-text');
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Replace with your own secret
 const tokenBlacklist = new Set();
