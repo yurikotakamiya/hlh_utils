@@ -17,7 +17,7 @@ const Home = () => {
     const handleLogout = async () => {
         const token = localStorage.getItem('token');
         try {
-            await axios.post('http://localhost:8000/logout', {}, {
+            await axios.post(`${process.env.REACT_APP_API_ROOT}/logout`, {}, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -40,7 +40,7 @@ const Home = () => {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.post('http://localhost:8000/chat', {
+            const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/chat`, {
                 message: input,
                 mode: use4o ? 'gpt-4o' : 'gpt-4o-mini'
             }, {

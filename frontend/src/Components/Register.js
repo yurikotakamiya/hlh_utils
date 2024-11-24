@@ -13,7 +13,7 @@ const Register = () => {
 
     const handleSubmit = async (values) => {
         try {
-            const response = await axios.post('http://localhost:8000/register', {
+            const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/register`, {
                 username: values.username,
                 password: values.password,
             });

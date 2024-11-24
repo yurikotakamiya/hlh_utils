@@ -8,7 +8,6 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const { expressjwt: expressJwt } = require('express-jwt'); // Updated import
 const axios = require('axios');
-// const { marked } = require('marked');
 const MarkdownIt = require('markdown-it');
 const { htmlToText } = require('html-to-text');
 const app = express();
