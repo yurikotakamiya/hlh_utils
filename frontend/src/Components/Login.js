@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Input, Button, Typography } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import CryptoJS from 'crypto-js';
 
 const { Title, Text } = Typography;
 
@@ -13,9 +14,17 @@ const Login = () => {
 
     const handleSubmit = async (values) => {
         try {
+            console.log('values', values, process.env.REACT_APP_SECRET_KEY);
+            // Generate a random IV
+            const iv = CryptoJS.lib.WordArray.random(16);
+            // Encrypt the password
+            const encryptedPassword = CryptoJS.AES.encrypt(values.password, CryptoJS.enc.Utf8.parse(process.env.REACT_APP_SECRET_KEY), { iv: iv }).toString();
+            // Concatenate the IV and the encrypted password
+            const encryptedData = iv.toString(CryptoJS.enc.Hex) + ':' + encryptedPassword;
+
             const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/login`, {
                 username: values.username,
-                password: values.password,
+                password: encryptedData,
             });
             localStorage.setItem('token', response.data.token); // Store the token in localStorage
             navigate('/home'); // Navigate to the home page after successful login
@@ -60,9 +69,9 @@ const Login = () => {
                     <Button type="primary" htmlType="submit">
                         Login
                     </Button>
-                    <Link to="/register">
+                    {/* <Link to="/register">
                         <Button type="link">Register</Button>
-                    </Link>
+                    </Link> */}
                 </Form.Item>
             </Form>
             {error && <Text type="danger">{error}</Text>}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, Typography, List } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -13,6 +13,26 @@ const Home = () => {
     const [loading, setLoading] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [use4o, setUse4o] = useState(false);
+
+    useEffect(() => {
+        // Set up Axios interceptor
+        const interceptor = axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response && error.response.status === 401) {
+                    // Token is invalid or expired, redirect to login page
+                    localStorage.removeItem('token');
+                    navigate('/');
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        // Clean up the interceptor when the component unmounts
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
+    }, [navigate]);
 
     const handleLogout = async () => {
         const token = localStorage.getItem('token');

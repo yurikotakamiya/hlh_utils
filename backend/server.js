@@ -1,19 +1,20 @@
 require('dotenv').config();
-
+const axios = require('axios');
+const MarkdownIt = require('markdown-it');
+const { htmlToText } = require('html-to-text');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const { expressjwt: expressJwt } = require('express-jwt'); // Updated import
-const axios = require('axios');
-const MarkdownIt = require('markdown-it');
-const { htmlToText } = require('html-to-text');
+const { expressjwt: expressJwt } = require('express-jwt');
+const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Replace with your own secret
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your_encryption_key'; // Replace with your own encryption key
 const tokenBlacklist = new Set();
 
 app.use(cors());
@@ -31,6 +32,21 @@ const authenticate = expressJwt({ secret: JWT_SECRET, algorithms: ['HS256'] }).u
 
 app.use(authenticate);
 
+function decrypt(text) {
+    try {
+        let textParts = text.split(':');
+        let iv = Buffer.from(textParts.shift(), 'hex');
+        let encryptedText = Buffer.from(textParts.join(':'), 'base64');
+        let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'utf8'), iv);
+        let decrypted = decipher.update(encryptedText);
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+        return decrypted.toString();
+    } catch (err) {
+        console.error('Decryption error:', err);
+        throw new Error('Decryption failed');
+    }
+}
+
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -47,6 +63,7 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
+    const decryptedPassword = decrypt(password);
     const client = await pool.connect();
     try {
         const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
@@ -54,13 +71,14 @@ app.post('/login', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         const user = result.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(decryptedPassword, user.password);
         if (!isMatch) {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
         const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '12h' });
         res.status(200).json({ message: 'Login successful', token });
     } catch (err) {
+        console.error('Error logging in user:', err);
         res.status(500).json({ error: 'Error logging in user' });
     } finally {
         client.release();
@@ -78,8 +96,6 @@ app.post('/chat', async (req, res) => {
     const userInput = req.body.message;
 
     try {
-        console.log('Received request:', req.body);
-        console.log('Using OpenAI API Key:', process.env.OPENAI_API_KEY);
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
@@ -126,11 +142,14 @@ app.get('/', async (req, res) => {
     try {
         const result = await client.query('SELECT NOW()');
         res.send(result.rows[0]);
+    } catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send('Internal Server Error');
     } finally {
         client.release();
     }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
