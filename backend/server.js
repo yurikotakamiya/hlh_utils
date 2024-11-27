@@ -49,9 +49,16 @@ function decrypt(text) {
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
+    let decryptedPassword;
+    try {
+        decryptedPassword = decrypt(password); // Decrypt the password received from the frontend
+    } catch (err) {
+        return res.status(400).json({ error: 'Invalid encrypted password' });
+    }
+    const hashedPassword = await bcrypt.hash(decryptedPassword, 10);
     const client = await pool.connect();
     try {
-        await client.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, password]);
+        await client.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
         res.status(201).send('User registered');
     } catch (err) {
         console.error('Error registering user:', err);
