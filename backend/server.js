@@ -49,12 +49,12 @@ function decrypt(text) {
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
     const client = await pool.connect();
     try {
-        await client.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
+        await client.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, password]);
         res.status(201).send('User registered');
     } catch (err) {
+        console.error('Error registering user:', err);
         res.status(500).send('Error registering user');
     } finally {
         client.release();
@@ -63,7 +63,12 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const decryptedPassword = decrypt(password);
+    let decryptedPassword;
+    try {
+        decryptedPassword = decrypt(password); // Decrypt the password received from the frontend
+    } catch (err) {
+        return res.status(400).json({ error: 'Invalid encrypted password' });
+    }
     const client = await pool.connect();
     try {
         const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
@@ -71,7 +76,7 @@ app.post('/login', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         const user = result.rows[0];
-        const isMatch = await bcrypt.compare(decryptedPassword, user.password);
+        const isMatch = await bcrypt.compare(decryptedPassword, user.password); // Compare the decrypted password with the hashed password
         if (!isMatch) {
             return res.status(400).json({ error: 'Invalid credentials' });
         }

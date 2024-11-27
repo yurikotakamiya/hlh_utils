@@ -14,7 +14,6 @@ const Login = () => {
 
     const handleSubmit = async (values) => {
         try {
-            console.log('values', values, process.env.REACT_APP_SECRET_KEY);
             // Generate a random IV
             const iv = CryptoJS.lib.WordArray.random(16);
             // Encrypt the password

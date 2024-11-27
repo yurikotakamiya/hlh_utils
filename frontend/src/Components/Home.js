@@ -110,6 +110,9 @@ const Home = () => {
             <Button type="primary" onClick={handleLogout}>
                 Logout
             </Button>
+            <Button type="primary" onClick={() => navigate('/register')} style={{ marginLeft: '10px' }}>
+                Register
+            </Button>
             <div className={`chat-popup ${isMinimized ? 'minimized' : ''}`} id="chatPopup" style={{ position: 'fixed', bottom: '0', right: '15px', border: '1px solid #ccc', backgroundColor: 'white', width: '300px', height: isMinimized ? '30px' : '500px', display: 'flex', flexDirection: 'column' }}>
                 <div className="chat-header" onClick={toggleChat} style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', cursor: 'pointer' }}>
                     Chat
