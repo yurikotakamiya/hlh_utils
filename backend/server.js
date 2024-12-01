@@ -1,7 +1,5 @@
 require('dotenv').config();
 const axios = require('axios');
-const MarkdownIt = require('markdown-it');
-const { htmlToText } = require('html-to-text');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -122,20 +120,8 @@ app.post('/chat', async (req, res) => {
             }
         );
         
-        // Convert GPT's Markdown response to HTML using markdown-it
-        const md = new MarkdownIt();
-        const htmlMessage = md.render(response.data.choices[0].message.content);
+        res.json({ message: response.data.choices[0].message.content });
 
-        // Convert HTML to plain text
-        const plainTextMessage = htmlToText(htmlMessage, {
-            wordwrap: false,
-            selectors: [
-                { selector: 'a', options: { ignoreHref: true } },
-                { selector: 'img', format: 'skip' }
-            ]
-        });
-
-        res.json({ message: plainTextMessage }); // Send HTML to frontend
     } catch (error) {
         console.error('Error communicating with OpenAI:', error.message);
         res.status(500).json({ error: 'Failed to fetch response from OpenAI' });
