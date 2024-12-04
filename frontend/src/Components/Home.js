@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Input, Typography, List } from 'antd';
+import React, { useEffect } from 'react';
+import { Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ChatWithGpt from './ChatWithGpt';
