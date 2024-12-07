@@ -33,7 +33,7 @@ const Home = () => {
     const handleLogout = async () => {
         const token = localStorage.getItem('token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_ROOT}/logout`, {}, {
+            await axios.post(`${process.env.REACT_APP_API_ROOT}/auth/logout`, {}, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

@@ -19,7 +19,7 @@ const Register = () => {
             // Concatenate the IV and the encrypted password
             const encryptedData = iv.toString(CryptoJS.enc.Hex) + ':' + encryptedPassword;
 
-            const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/register`, {
+            const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/auth/register`, {
                 username: values.username,
                 password: encryptedData,
             });
