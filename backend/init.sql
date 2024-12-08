@@ -4,3 +4,15 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS logs (
+  id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  level VARCHAR(50), -- e.g., INFO, ERROR
+  message TEXT NOT NULL, -- Error message or status update
+  url TEXT -- URL or post ID that caused the log
+);
+
+-- To run this file in the database, use the following command:
+-- docker-compose exec db psql -U postgres -d mydatabase
+-- \i /docker-entrypoint-initdb.d/init.sql
