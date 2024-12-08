@@ -1,5 +1,5 @@
 # frontend/Dockerfile
-FROM node:14
+FROM node:18
 
 WORKDIR /usr/src/app
 
