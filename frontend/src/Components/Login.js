@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Input, Button, Typography } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 
 const { Title, Text } = Typography;
@@ -68,9 +68,6 @@ const Login = () => {
                     <Button type="primary" htmlType="submit">
                         Login
                     </Button>
-                    <Link to="/register">
-                        <Button type="link">Register</Button>
-                    </Link>
                 </Form.Item>
             </Form>
             {error && <Text type="danger">{error}</Text>}
