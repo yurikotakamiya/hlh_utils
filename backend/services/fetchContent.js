@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 const logError = require('./logError'); // Error logging service
+const fetchComments = require('./fetchComments'); // Comment extraction service
 
 async function fetchContent(post, postId) {
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
@@ -50,6 +51,17 @@ async function fetchContent(post, postId) {
         // Save HTML content
         const postFilePath = path.join(postDir, `post-${sanitizedPostId}.html`);
         fs.writeFileSync(postFilePath, content, 'utf8');
+
+        // Determine the maximum number of comment pages
+        let maxCommentPage = 0;
+        $('.paginate a').each((_, element) => {
+            const pageNum = parseInt($(element).text().trim(), 10);
+            if (!isNaN(pageNum) && pageNum > maxCommentPage) {
+                maxCommentPage = pageNum;
+            }
+        });
+
+        await fetchComments(sanitizedPostId, today, maxCommentPage); // Pass both $ and commentsHtml
 
         // Initialize metadata
         const metadata = {

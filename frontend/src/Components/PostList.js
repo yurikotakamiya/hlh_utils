@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Modal, Alert, Card, List, Typography } from 'antd';
 import axios from 'axios';
 import DynamicContent from './DynamicContent';
+import DOMPurify from 'dompurify';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
     const [selectedPost, setSelectedPost] = useState(null);
+    const [selectedComments, setSelectedComments] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -58,6 +60,31 @@ const PostList = () => {
         }
     };
 
+    const viewComments = async (date, postId) => {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem('token');
+    
+        try {
+            const response = await axios.get(
+                `${process.env.REACT_APP_API_ROOT}/comments/${date}/post-${postId}-comments.html`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            const sanitizedHtml = DOMPurify.sanitize(response.data);
+            setSelectedComments({ content: sanitizedHtml, date, postId });
+        } catch (err) {
+            console.error('Error fetching comments:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+
     if (loading && !posts.length) {
         return (
             <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -86,7 +113,10 @@ const PostList = () => {
                         <List
                             dataSource={group.posts}
                             renderItem={(post) => (
-                                <List.Item onClick={() => viewPost(group.date, `post-${post.id}.html`, post.title)}>
+                                <List.Item onClick={() => {
+                                    viewPost(group.date, `post-${post.id}.html`, post.title)
+                                    viewComments(group.date, post.id)
+                                }}>
                                     <Typography level={5}>{`${post.title} - ${post.date}`}</Typography>
                                 </List.Item>
                             )}
@@ -120,6 +150,15 @@ const PostList = () => {
                     >
                         <div className="modal-content" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                             <DynamicContent htmlContent={selectedPost.content} />
+                            <div>
+                                <h2>Comments</h2>
+                                {selectedComments?.content ? (
+                                    <div dangerouslySetInnerHTML={{ __html: selectedComments.content }} />
+                                ) : (
+                                    <p>No comments available</p>
+                                )}
+                            </div>
+
                         </div>
                     </Card>
                 </div>
