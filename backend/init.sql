@@ -13,6 +13,13 @@ CREATE TABLE IF NOT EXISTS logs (
   url TEXT -- URL or post ID that caused the log
 );
 
+CREATE TABLE IF NOT EXISTS post_lengths (
+  id SERIAL PRIMARY KEY,
+  post_id TEXT NOT NULL, -- Store the post ID or URL
+  length INTEGER NOT NULL, -- Store the length of the post content
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Track when this entry was created
+);
+
 -- To run this file in the database, use the following command:
 -- docker-compose exec db psql -U postgres -d mydatabase
 -- \i /docker-entrypoint-initdb.d/init.sql

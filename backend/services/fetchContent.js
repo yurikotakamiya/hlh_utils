@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const logError = require('./logError'); // Error logging service
 const fetchComments = require('./fetchComments'); // Comment extraction service
+const logPostLength = require('./logPostLength'); // Post length logging service
 
 async function fetchContent(post, postId) {
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
@@ -47,6 +48,8 @@ async function fetchContent(post, postId) {
         if (!content) {
             throw new Error(`No content found for post ${sanitizedPostId}`);
         }
+        const contentLength = content.length;
+        await logPostLength(sanitizedPostId, contentLength);
 
         // Save HTML content
         const postFilePath = path.join(postDir, `post-${sanitizedPostId}.html`);
