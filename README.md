@@ -27,3 +27,8 @@ To free up disk space on your Docker host, you can use the following commands:
 `docker system df`
 
 
+### For runnning the contents installation for 2ch website, run 
+`docker exec -it hlh_utils-backend-1 sh`
+
+### For accessing ollama in docker compose
+`docker exec -it hlh_utils-ollama-1 /bin/sh`
