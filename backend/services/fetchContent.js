@@ -6,7 +6,7 @@ const logError = require('./logError'); // Error logging service
 const fetchComments = require('./fetchComments'); // Comment extraction service
 const logPostLength = require('./logPostLength'); // Post length logging service
 
-async function fetchContent(post, postId) {
+async function fetchContent(post, postId, download=false) {
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     const postDir = path.join(__dirname, `../data/ilbe-posts/${today}`);
     const metaDir = path.join(__dirname, `../data/ilbe-meta/${today}`);
@@ -47,6 +47,9 @@ async function fetchContent(post, postId) {
         const content = $('.post-content').html();
         if (!content) {
             throw new Error(`No content found for post ${sanitizedPostId}`);
+        }
+        if (!download) {
+            return content;
         }
         const contentLength = content.length;
         await logPostLength(sanitizedPostId, contentLength);

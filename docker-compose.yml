@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 services:
   backend:
     build: ./backend
@@ -10,6 +10,10 @@ services:
       - ./data:/usr/src/app/data
     depends_on:
       - db
+      - ollama
+    networks:
+      - app-network
+
   frontend:
     build: ./frontend
     ports:
@@ -19,6 +23,9 @@ services:
       - /usr/src/app/node_modules
     depends_on:
       - backend
+    networks:
+      - app-network
+
   db:
     image: postgres:13
     environment:
@@ -30,5 +37,24 @@ services:
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
+    networks:
+      - app-network
+
+  ollama:
+    image: docker.io/ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    networks:
+      - app-network
+
 volumes:
   db-data:
+  ollama-data:
+
+networks:
+  app-network:
+    driver: bridge
