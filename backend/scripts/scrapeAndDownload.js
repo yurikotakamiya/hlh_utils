@@ -1,6 +1,7 @@
 const fetchTitles = require('../services/fetchTitles');
 const fetchContent = require('../services/fetchContent');
 const filterContentWithOllama = require('../services/filterContentWithOllama');
+const isPostIdInDatabase = require('../services/isPostIdInDatabase');
 
 async function scrapeAndDownload() {
     for (let page = 1; page <= 10; page++) {
@@ -12,6 +13,12 @@ async function scrapeAndDownload() {
 
             for (const post of titles) {
                 const postId = post.link.split('/').pop(); // Extract post ID from URL
+                // if post_id is already in the database, skip
+                if (await isPostIdInDatabase(postId)) {
+                    console.log(`Post ${postId} is already in the database.`);
+                    continue;
+                }
+
                 try {
                     // Fetch post content
                     const content = await fetchContent(post, postId, false);

@@ -27,11 +27,15 @@ Respond with "relevant" or "not relevant".
 
         let fullResponse = '';
         response.data.on('data', (chunk) => {
-            const data = JSON.parse(chunk.toString());
-            if (data.response) {
-                fullResponse += data.response;
+            try {
+                const data = JSON.parse(chunk.toString());
+                if (data.response) {
+                    fullResponse += data.response;
+                }
+            } catch (err) {
+                console.error('Error parsing chunk:', chunk.toString());
             }
-        });
+        });        
 
         return new Promise((resolve, reject) => {
             response.data.on('end', () => {
