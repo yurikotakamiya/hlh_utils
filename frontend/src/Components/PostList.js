@@ -66,16 +66,20 @@ const PostList = () => {
         const token = localStorage.getItem('token');
     
         try {
-            const response = await axios.get(
+            await axios.get(
                 `${process.env.REACT_APP_API_ROOT}/comments/${date}/post-${postId}-comments.html`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 }
-            );
-            const sanitizedHtml = DOMPurify.sanitize(response.data);
-            setSelectedComments({ content: sanitizedHtml, date, postId });
+            ).then((response) => {
+                const sanitizedHtml = DOMPurify.sanitize(response.data);
+                setSelectedComments({ content: sanitizedHtml, date, postId });
+            }).catch((err) => {
+                console.error('Error fetching comments:', err);
+                setSelectedComments({ content: '', date, postId });
+            });
         } catch (err) {
             console.error('Error fetching comments:', err);
             setError(err.message);
