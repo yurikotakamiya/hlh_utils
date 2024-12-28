@@ -24,7 +24,7 @@ const PostList = () => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setPosts(response.data);
+                setPosts(response.data?.sort((a, b) => new Date(b.date) - new Date(a.date)));
             } catch (err) {
                 console.error('Error fetching posts:', err);
                 setError(err.message);
