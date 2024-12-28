@@ -48,12 +48,11 @@ async function fetchContent(post, postId, download=false) {
         if (!content) {
             throw new Error(`No content found for post ${sanitizedPostId}`);
         }
+        const contentLength = content.length;
+        await logPostLength(sanitizedPostId, contentLength);
         if (!download) {
             return content;
         }
-        const contentLength = content.length;
-        await logPostLength(sanitizedPostId, contentLength);
-
         // Save HTML content
         const postFilePath = path.join(postDir, `post-${sanitizedPostId}.html`);
         fs.writeFileSync(postFilePath, content, 'utf8');
