@@ -26,21 +26,36 @@ Respond with "relevant" or "not relevant".
         );
 
         let fullResponse = '';
-        response.data.on('data', (chunk) => {
-            try {
-                const data = JSON.parse(chunk.toString());
-                if (data.response) {
-                    fullResponse += data.response;
-                }
-            } catch (err) {
-                console.error('Error parsing chunk:', chunk.toString());
-            }
-        });        
+        const chunks = [];
 
         return new Promise((resolve, reject) => {
-            response.data.on('end', () => {
-                resolve(fullResponse.trim().toLowerCase() === 'relevant');
+            response.data.on('data', (chunk) => {
+                try {
+                    chunks.push(chunk.toString()); // Collect chunks
+                } catch (err) {
+                    console.error('Error processing chunk:', chunk.toString());
+                }
             });
+
+            response.data.on('end', () => {
+                try {
+                    const completeResponse = chunks.join(''); // Combine all chunks
+                    const lines = completeResponse.split('\n'); // Split into lines
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            const data = JSON.parse(line); // Parse each JSON line
+                            if (data.response) {
+                                fullResponse += data.response; // Append the response
+                            }
+                        }
+                    }
+                    resolve(fullResponse.trim().toLowerCase() === 'relevant');
+                } catch (err) {
+                    console.error('Error parsing complete response:', err.message);
+                    reject(new Error('Failed to parse Ollama response'));
+                }
+            });
+
             response.data.on('error', (err) => {
                 console.error('Error while streaming response from Ollama:', err.message);
                 reject(new Error('Failed to filter content'));
