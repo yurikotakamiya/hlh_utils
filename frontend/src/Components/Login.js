@@ -26,6 +26,7 @@ const Login = () => {
                 password: encryptedData,
             });
             localStorage.setItem('token', response.data.token); // Store the token in localStorage
+            localStorage.setItem('currentUser', JSON.stringify(response.data.user)); // Store the user object in localStorage
             navigate('/home'); // Navigate to the home page after successful login
         } catch (error) {
             if (error.response && error.response.data) {

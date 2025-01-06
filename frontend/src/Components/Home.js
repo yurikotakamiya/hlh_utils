@@ -58,6 +58,10 @@ const Home = () => {
             <Button type="primary" onClick={() => navigate('/post-list')} style={{ marginLeft: '10px' }}>
                 Post List
             </Button>
+            <Button type="primary" onClick={() => navigate('/score-sheet')} style={{ marginLeft: '10px' }}>
+                Score Sheet
+            </Button>
+
             <ChatWithGpt />
         </div>
     );
