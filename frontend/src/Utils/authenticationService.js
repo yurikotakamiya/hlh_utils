@@ -2,11 +2,11 @@ import axios from 'axios'
 
 export const currentUser = JSON.parse(localStorage.getItem('currentUser'))
 
-const logout = () => {
-    // remove user from local storage to log user out
+export const logout = () => {
     console.log('Logging out')
     localStorage.removeItem('token')
-    AxiosWithAuth.delete('/logout')
+    localStorage.removeItem('currentUser')
+    window.location.reload()
     console.log('logged out')
 }
 
