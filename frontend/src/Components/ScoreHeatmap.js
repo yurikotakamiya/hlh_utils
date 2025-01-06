@@ -1,47 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tabs, Popover } from 'antd';
-import { AxiosWithAuth, currentUser } from '../Utils/authenticationService';
 
-const ScoreHeatmap = () => {
-    const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [availableYears, setAvailableYears] = useState([]);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const userId = currentUser.id;
-
-    useEffect(() => {
-        const fetchScores = async () => {
-            try {
-                const scoreResponse = await AxiosWithAuth.get(`scores/${userId}`);
-                const scores = scoreResponse.data;
-
-                const years = Array.from(new Set(scores.map((row) => new Date(row.date).getFullYear())));
-                setAvailableYears(years);
-                if (!years.includes(selectedYear)) {
-                    setSelectedYear(new Date().getFullYear());
-                }
-
-                const transformedData = scores.map((row) => ({
-                    date: row.date.split('T')[0],
-                    count: Object.keys(row)
-                        .filter((key) => key.startsWith('col_'))
-                        .reduce((sum, key) => sum + row[key], 0),
-                    comment: row.comment || '',
-                }));
-
-                setData(transformedData);
-            } catch (error) {
-                console.error('Error fetching scores:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchScores();
-    }, [userId, selectedYear]);
-
+const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selectedYear }) => {
     const getColorForValue = (count) => {
         if (!count || count === undefined) return '#ebedf0';
         if (count >= 50) return '#239a3b';

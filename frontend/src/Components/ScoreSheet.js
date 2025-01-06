@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, DatePicker, message, Typography, Card } from 'antd';
+import { Form, Input, InputNumber, Button, DatePicker, message, Typography, Card, Tabs, Table } from 'antd';
+import { SmileOutlined } from '@ant-design/icons';
 import { AxiosWithAuth, currentUser } from '../Utils/authenticationService';
 import ScoreHeatmap from './ScoreHeatmap';
 import moment from 'moment';
@@ -11,6 +12,13 @@ const ScoreSheet = () => {
     const [form] = Form.useForm();
     const [columnForm] = Form.useForm();
     const [displayNames, setDisplayNames] = useState({});
+    const [openSubmitScoreCard, setOpenSubmitScoreCard] = useState(false);
+    const [openUpdateColumnNamesCard, setOpenUpdateColumnNamesCard] = useState(false);
+    const [availableYears, setAvailableYears] = useState([]);
+    const [scoreData, setScoreData] = useState([]);
+    const [scoreDataLoading, setScoreDataLoading] = useState(true);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
     const userId = currentUser.id;
 
     // Fetch existing column names
@@ -29,6 +37,38 @@ const ScoreSheet = () => {
                 message.error('Failed to fetch column names.');
             });
     }, [userId, columnForm]);
+
+    useEffect(() => {
+        const fetchScores = async () => {
+            try {
+                const scoreResponse = await AxiosWithAuth.get(`scores/${userId}`);
+                const scores = scoreResponse.data;
+
+                const years = Array.from(new Set(scores.map((row) => new Date(row.date).getFullYear())));
+                setAvailableYears(years);
+                if (!years.includes(selectedYear)) {
+                    setSelectedYear(new Date().getFullYear());
+                }
+
+                const transformedData = scores.sort((a, b) => new Date(b.date) - new Date(a.date)).map((row) => ({
+                    date: row.date.split('T')[0],
+                    count: Object.keys(row)
+                        .filter((key) => key.startsWith('col_'))
+                        .reduce((sum, key) => sum + row[key], 0),
+                    comment: row.comment || '',
+                    ...row, // Include the entire row for detailed list view
+                }));
+
+                setScoreData(transformedData);
+            } catch (error) {
+                console.error('Error fetching scores:', error);
+            } finally {
+                setScoreDataLoading(false);
+            }
+        };
+
+        fetchScores();
+    }, [userId, selectedYear]);
 
     const handleScoreSubmit = async (values) => {
         try {
@@ -65,68 +105,119 @@ const ScoreSheet = () => {
         }
     };
 
+    const columns = [
+        {
+            title: 'Date',
+            dataIndex: 'date',
+            key: 'date',
+        },
+        ...Object.keys(displayNames).map((col) => ({
+            title: displayNames[col] || col,
+            dataIndex: col,
+            key: col,
+        })),
+        {
+            title: 'Comment',
+            dataIndex: 'comment',
+            key: 'comment',
+        },
+    ];
+
     return (
         <div style={{ padding: '20px' }}>
             <Title level={2}>Score Sheet</Title>
-            <ScoreHeatmap />
+
+            <Tabs defaultActiveKey="heatmap">
+                <Tabs.TabPane tab="Heatmap View" key="heatmap">
+                    <ScoreHeatmap
+                        availableYears={availableYears}
+                        data={scoreData}
+                        loading={scoreDataLoading}
+                        selectedYear={selectedYear}
+                        setSelectedYear={setSelectedYear}
+                    />
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab="List View" key="list">
+                    <Table
+                        dataSource={scoreData}
+                        columns={columns}
+                        rowKey="date"
+                        loading={scoreDataLoading}
+                        pagination={{ pageSize: 10 }}
+                    />
+                </Tabs.TabPane>
+            </Tabs>
 
             {/* Score Submission */}
-            <Card title="Submit Scores" style={{ marginBottom: '20px' }}>
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleScoreSubmit}
-                    initialValues={{ date: moment() }}
-                >
-                    <Form.Item
-                        label="Date"
-                        name="date"
-                        rules={[{ required: true, message: 'Please select a date!' }]}
+            <Card title="Submit Scores" style={{ marginBottom: '20px' }} extra={<Button onClick={() => setOpenSubmitScoreCard(!openSubmitScoreCard)}>{openSubmitScoreCard ? 'Close' :'Open'}</Button>}>
+                {openSubmitScoreCard ? (
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleScoreSubmit}
+                        initialValues={{ date: moment() }}
                     >
-                        <DatePicker />
-                    </Form.Item>
-                    {[...Array(10)].map((_, i) => (
                         <Form.Item
-                            key={i}
-                            label={displayNames[`col_${i + 1}`] || `Column ${i + 1}`}
-                            name={['scores', `col_${i + 1}`]}
+                            label="Date"
+                            name="date"
+                            rules={[{ required: true, message: 'Please select a date!' }]}
                         >
-                            <InputNumber min={0} max={100} />
+                            <DatePicker />
                         </Form.Item>
-                    ))}
-                    <Form.Item label="Comment" name="comment">
-                        <Input.TextArea rows={3} />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit">
-                            Submit Scores
-                        </Button>
-                    </Form.Item>
-                </Form>
+                        {Object.entries(displayNames).map(([col, displayName]) => (
+                            <Form.Item
+                                key={col}
+                                label={displayName}
+                                name={['scores', col]}
+                            >
+                                <InputNumber min={0} max={100} />
+                            </Form.Item>
+                        ))}
+                        <Form.Item label="Comment" name="comment">
+                            <Input.TextArea rows={3} />
+                        </Form.Item>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">
+                                Submit Scores
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                ) : (
+                    <Typography.Text>
+                        Click the button to submit your score for the day <SmileOutlined />
+                    </Typography.Text>
+                )}
             </Card>
 
             {/* Update Column Names */}
-            <Card title="Update Column Names">
-                <Form
-                    form={columnForm}
-                    layout="vertical"
-                    onFinish={handleColumnNameSubmit}
-                >
-                    {[...Array(10)].map((_, i) => (
-                        <Form.Item
-                            key={i}
-                            label={`Column ${i + 1} Name`}
-                            name={`col_${i + 1}`}
-                        >
-                            <Input />
+            <Card title="Update Column Names" style={{ marginBottom: '20px' }} extra={<Button onClick={() => setOpenUpdateColumnNamesCard(!openUpdateColumnNamesCard)}>{openUpdateColumnNamesCard ? 'Close' :'Open'}</Button>}>
+                {openUpdateColumnNamesCard ? (
+                    <Form
+                        form={columnForm}
+                        layout="vertical"
+                        onFinish={handleColumnNameSubmit}
+                    >
+                        {[...Array(10)].map((_, i) => (
+                            <Form.Item
+                                key={i}
+                                label={`Column ${i + 1} Name`}
+                                name={`col_${i + 1}`}
+                            >
+                                <Input />
+                            </Form.Item>
+                        ))}
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">
+                                Update Column Names
+                            </Button>
                         </Form.Item>
-                    ))}
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit">
-                            Update Column Names
-                        </Button>
-                    </Form.Item>
-                </Form>
+                    </Form>
+                ) : (
+                    <Typography.Text>
+                        Click the button to update the column names <SmileOutlined />
+                    </Typography.Text>
+                )}
             </Card>
         </div>
     );
