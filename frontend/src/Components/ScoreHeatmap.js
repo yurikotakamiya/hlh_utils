@@ -112,7 +112,7 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                             label: category,
                             key: category,
                             children: (
-                                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', width: '60vw' }}>
                                     {/* Heatmap */}
                                     <div style={{ flex: 1 }}>
                                         <CalendarHeatmap
