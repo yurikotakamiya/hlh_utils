@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Menu, Dropdown, Button } from 'antd';
+import { Menu, Dropdown, Button, Typography } from 'antd';
 import { MenuOutlined, HomeOutlined, UnorderedListOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons';
 import { logout } from '../Utils/authenticationService';
 
@@ -30,6 +30,7 @@ const Layout = () => {
                 <Dropdown overlay={menu} trigger={['click']}>
                     <Button icon={<MenuOutlined />} style={{ border: 'none', boxShadow: 'none' }}/>
                 </Dropdown>
+                <Typography.Title level={4} style={{ display: 'inline', marginLeft: '10px' }}>HLH Family Utils</Typography.Title>
             </div>
             <div style={{ padding: '20px' }}>
                 <Outlet />

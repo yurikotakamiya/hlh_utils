@@ -4,6 +4,7 @@ import { SmileOutlined } from '@ant-design/icons';
 import { AxiosWithAuth, currentUser } from '../Utils/authenticationService';
 import ScoreHeatmap from './ScoreHeatmap';
 import moment from 'moment';
+import locale from 'antd/es/date-picker/locale/en_US';
 moment.locale('en');
 
 const { Title } = Typography;
@@ -23,22 +24,27 @@ const ScoreSheet = () => {
 
     // Fetch existing column names
     useEffect(() => {
-        AxiosWithAuth.get(`/scores/score-column-names/${userId}`)
-            .then((response) => {
-                const names = response.data.reduce((acc, { col_name, friendly_name }) => {
-                    acc[col_name] = friendly_name;
-                    return acc;
-                }, {});
-                setDisplayNames(names);
-                columnForm.setFieldsValue(names); // Prefill the column names
-            })
-            .catch((err) => {
-                console.error(err);
-                message.error('Failed to fetch column names.');
-            });
+        if (!userId) return;
+        const fetchColumnNames = async () => {
+            try {
+                await AxiosWithAuth.get(`/scores/score-column-names/${userId}`)
+                    .then((response) => {
+                        const names = response.data.reduce((acc, { col_name, friendly_name }) => {
+                            acc[col_name] = friendly_name;
+                            return acc;
+                        }, {});
+                        setDisplayNames(names);
+                        columnForm.setFieldsValue(names); // Prefill the column names
+                    })
+            } catch (error) {
+                console.error('Error fetching column names:', error);
+            }
+        };
+        fetchColumnNames();
     }, [userId, columnForm]);
 
     useEffect(() => {
+        if (!userId) return;
         const fetchScores = async () => {
             try {
                 const scoreResponse = await AxiosWithAuth.get(`scores/${userId}`);
@@ -135,6 +141,7 @@ const ScoreSheet = () => {
                         loading={scoreDataLoading}
                         selectedYear={selectedYear}
                         setSelectedYear={setSelectedYear}
+                        columnNames={displayNames}
                     />
                 </Tabs.TabPane>
 
@@ -156,14 +163,13 @@ const ScoreSheet = () => {
                         form={form}
                         layout="vertical"
                         onFinish={handleScoreSubmit}
-                        initialValues={{ date: moment() }}
                     >
                         <Form.Item
                             label="Date"
                             name="date"
                             rules={[{ required: true, message: 'Please select a date!' }]}
                         >
-                            <DatePicker />
+                            <DatePicker locale={locale}/>
                         </Form.Item>
                         {Object.entries(displayNames).map(([col, displayName]) => (
                             <Form.Item
@@ -171,7 +177,7 @@ const ScoreSheet = () => {
                                 label={displayName}
                                 name={['scores', col]}
                             >
-                                <InputNumber min={0} max={100} />
+                                <InputNumber min={1} max={3} />
                             </Form.Item>
                         ))}
                         <Form.Item label="Comment" name="comment">
