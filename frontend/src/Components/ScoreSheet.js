@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Button, DatePicker, message, Typography, Card, Tabs, Table } from 'antd';
 import { SmileOutlined } from '@ant-design/icons';
-import { AxiosWithAuth, currentUser } from '../Utils/authenticationService';
+import { AxiosWithAuth } from '../Utils/authenticationService';
 import ScoreHeatmap from './ScoreHeatmap';
+import axios from 'axios';
 import moment from 'moment';
 import locale from 'antd/es/date-picker/locale/en_US';
 moment.locale('en');
@@ -20,14 +21,19 @@ const ScoreSheet = () => {
     const [scoreDataLoading, setScoreDataLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    const userId = currentUser.id;
-
+    const userId = JSON.parse(localStorage.getItem('currentUser'))?.id;
+    
     // Fetch existing column names
     useEffect(() => {
         if (!userId) return;
+        const requestConfig = {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+        };
         const fetchColumnNames = async () => {
             try {
-                await AxiosWithAuth.get(`/scores/score-column-names/${userId}`)
+                await axios.get(`/scores/score-column-names/${userId}`, requestConfig)
                     .then((response) => {
                         const names = response.data.reduce((acc, { col_name, friendly_name }) => {
                             acc[col_name] = friendly_name;
@@ -41,13 +47,9 @@ const ScoreSheet = () => {
             }
         };
         fetchColumnNames();
-    }, [userId, columnForm]);
-
-    useEffect(() => {
-        if (!userId) return;
         const fetchScores = async () => {
             try {
-                const scoreResponse = await AxiosWithAuth.get(`scores/${userId}`);
+                const scoreResponse = await axios.get(`scores/${userId}`, requestConfig);
                 const scores = scoreResponse.data;
 
                 const years = Array.from(new Set(scores.map((row) => new Date(row.date).getFullYear())));
@@ -72,9 +74,8 @@ const ScoreSheet = () => {
                 setScoreDataLoading(false);
             }
         };
-
         fetchScores();
-    }, [userId, selectedYear]);
+    }, [userId, columnForm, selectedYear]);
 
     const handleScoreSubmit = async (values) => {
         try {
