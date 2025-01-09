@@ -92,7 +92,7 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                                             startDate={startDate}
                                             endDate={endDate}
                                             values={allCategoriesData}
-                                            showWeekdayLabels
+                                        
                                             transformDayElement={(el, value) => renderHeatmapDay(el, value)}
                                         />
                                     </div>
@@ -124,7 +124,7 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                                             startDate={startDate}
                                             endDate={endDate}
                                             values={data}
-                                            showWeekdayLabels
+                                        
                                             transformDayElement={(el, value) => renderHeatmapDay(el, value)}
                                         />
                                     </div>
