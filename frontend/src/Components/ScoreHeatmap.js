@@ -2,13 +2,20 @@ import React from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tabs, Popover } from 'antd';
+import moment from 'moment';
+moment.locale('en');
+
 
 const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selectedYear, columnNames }) => {
+    // it should be moment.utc(`${selectedYear}-01-01`).toDate(); - 1 day
+    const startDate = moment.utc(`${selectedYear}-01-01`).add(-1, 'day').toDate();
+    const endDate = moment.utc(`${selectedYear}-12-31`).add(-1, 'day').toDate();    
+
     const getColorForValue = (count) => {
         if (!count || count === undefined) return '#ebedf0';
-        if (count >= 3) return '#7bc96f';
-        if (count >= 2) return '#c6e48b';
-        if (count >= 1) return '#ebedf0';
+        if (count >= 3) return '#239a3b';
+        if (count >= 2) return '#7bc96f';
+        if (count >= 1) return '#c6e48b';
         return '#ebedf0';
     };
 
@@ -19,7 +26,7 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                 content={
                     value && value.date ? (
                         <>
-                            <p><strong>Date:</strong> {value.date}</p>
+                            <p><strong>Date:</strong> {moment.utc(value.date).format('YYYY-MM-DD (ddd)')}</p>
                             <p><strong>Score:</strong> {value.count.toFixed(2)}</p>
                             <p><strong>Comment:</strong> {value.comment}</p>
                         </>
@@ -40,12 +47,24 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
         );
     };
 
-    // Filter and prepare data for each category
+    const allCategoriesData = data
+        .filter((entry) => moment.utc(entry.date).year() === selectedYear) // Filter using UTC year
+        .map((entry) => {
+            const totalScore = Object.keys(columnNames).reduce((sum, col) => sum + (entry[col] || 0), 0);
+            const avgScore = totalScore / Object.keys(columnNames).length;
+
+            return {
+                date: moment.utc(entry.date).format('YYYY-MM-DD'), // Ensure the date remains in UTC
+                count: avgScore,
+                comment: entry.comment || '',
+            };
+        });
+
     const categoryHeatmaps = Object.keys(columnNames).map((col) => {
         const categoryData = data
-            .filter((entry) => new Date(entry.date).getFullYear() === selectedYear)
+            .filter((entry) => moment.utc(entry.date).year() === selectedYear) // Filter using UTC year
             .map((entry) => ({
-                date: entry.date,
+                date: moment.utc(entry.date).format('YYYY-MM-DD'), // Ensure the date remains in UTC
                 count: entry[col] || 0, // Use the specific column's value
                 comment: entry.comment || '',
             }));
@@ -53,20 +72,9 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
         return { category: columnNames[col], data: categoryData };
     });
 
-    // Prepare "All Categories" data
-    const allCategoriesData = data
-        .filter((entry) => new Date(entry.date).getFullYear() === selectedYear)
-        .map((entry) => {
-            const totalScore = Object.keys(columnNames).reduce((sum, col) => sum + (entry[col] || 0), 0);
-            const avgScore = totalScore / Object.keys(columnNames).length;
 
-            return {
-                date: entry.date,
-                count: avgScore,
-                comment: entry.comment || '',
-            };
-        });
-
+        console.log(startDate, endDate, allCategoriesData);
+    
     return (
         <div>
             <h2 style={{ textAlign: 'center' }}>Score Heatmap</h2>
@@ -84,8 +92,8 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                                     {/* Heatmap */}
                                     <div style={{ flex: 1 }}>
                                         <CalendarHeatmap
-                                            startDate={new Date(`${selectedYear}-01-01`)}
-                                            endDate={new Date(`${selectedYear}-12-31`)}
+                                            startDate={startDate}
+                                            endDate={endDate}
                                             values={allCategoriesData}
                                             showWeekdayLabels
                                             transformDayElement={(el, value) => renderHeatmapDay(el, value)}
@@ -116,8 +124,8 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
                                     {/* Heatmap */}
                                     <div style={{ flex: 1 }}>
                                         <CalendarHeatmap
-                                            startDate={new Date(`${selectedYear}-01-01`)}
-                                            endDate={new Date(`${selectedYear}-12-31`)}
+                                            startDate={startDate}
+                                            endDate={endDate}
                                             values={data}
                                             showWeekdayLabels
                                             transformDayElement={(el, value) => renderHeatmapDay(el, value)}

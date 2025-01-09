@@ -101,4 +101,23 @@ router.get('/score-column-names/:user_id', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(`
+            DELETE FROM scores WHERE id = $1 RETURNING *
+        `, [id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Score entry not found' });
+        }
+
+        res.status(200).json({ message: 'Score entry deleted successfully', deleted: result.rows[0] });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 module.exports = router;

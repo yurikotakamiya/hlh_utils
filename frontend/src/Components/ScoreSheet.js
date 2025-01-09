@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, DatePicker, message, Typography, Card, Tabs, Table } from 'antd';
-import { SmileOutlined } from '@ant-design/icons';
+import { Form,
+    Input,
+    InputNumber,
+    Button,
+    DatePicker,
+    message,
+    Typography,
+    Card,
+    Tabs,
+    Table,
+    Popconfirm
+} from 'antd';
+import { SmileOutlined, DeleteOutlined } from '@ant-design/icons';
 import { AxiosWithAuth } from '../Utils/authenticationService';
 import ScoreHeatmap from './ScoreHeatmap';
 import axios from 'axios';
@@ -59,7 +70,7 @@ const ScoreSheet = () => {
                 }
 
                 const transformedData = scores.sort((a, b) => new Date(b.date) - new Date(a.date)).map((row) => ({
-                    date: row.date.split('T')[0],
+                    adjustedDate: row.date.split('T')[0],
                     count: Object.keys(row)
                         .filter((key) => key.startsWith('col_'))
                         .reduce((sum, key) => sum + row[key], 0),
@@ -112,10 +123,35 @@ const ScoreSheet = () => {
         }
     };
 
+    const handleDelete = async (record) => {
+        try {
+            await AxiosWithAuth.delete(`/scores/${record.id}`);
+            message.success('Score entry deleted successfully.');
+            setScoreData((prevData) => prevData.filter((item) => item.id !== record.id));
+        } catch (err) {
+            console.error('Failed to delete score entry:', err);
+            message.error('Failed to delete score entry.');
+        }
+    };
+
     const columns = [
         {
+            title: '',
+            key: 'delete',
+            render: (_, record) => (
+                <Popconfirm
+                    title="Are you sure to delete this entry?"
+                    onConfirm={() => handleDelete(record)}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button danger icon={<DeleteOutlined />} />
+                </Popconfirm>
+            ),
+        },
+        {
             title: 'Date',
-            dataIndex: 'date',
+            dataIndex: 'adjustedDate',
             key: 'date',
         },
         ...Object.keys(displayNames).map((col) => ({
