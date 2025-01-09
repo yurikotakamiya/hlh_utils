@@ -71,9 +71,6 @@ const ScoreHeatmap = ({ availableYears, data, loading, setSelectedYear, selected
 
         return { category: columnNames[col], data: categoryData };
     });
-
-
-        console.log(startDate, endDate, allCategoriesData);
     
     return (
         <div>
