@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS score_column_names (
   UNIQUE (user_id, col_name) -- Ensure a unique combination of user_id and col_name
 );
 
+CREATE TABLE IF NOT EXISTS keywords (
+    id SERIAL PRIMARY KEY,
+    word VARCHAR(255) NOT NULL,
+    UNIQUE(word)
+);
+
 -- To run this file in the database, use the following command:
 -- docker-compose exec db psql -U postgres -d mydatabase
 -- \i /docker-entrypoint-initdb.d/init.sql

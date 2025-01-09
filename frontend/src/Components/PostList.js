@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Spin, Modal, Alert, Card, List, Typography } from 'antd';
+import { Spin, Modal, Alert, Card, List, Typography, Button } from 'antd';
 import axios from 'axios';
 import DynamicContent from './DynamicContent';
 import DOMPurify from 'dompurify';
+import KeywordsManager from './KeywordsManager';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
@@ -10,6 +11,7 @@ const PostList = () => {
     const [selectedComments, setSelectedComments] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [showKeywordsModal, setShowKeywordsModal] = useState(false);
 
     // Fetch grouped posts on mount
     useEffect(() => {
@@ -107,6 +109,16 @@ const PostList = () => {
 
     return (
         <div style={{ padding: '20px' }}>
+            <Button onClick={() => setShowKeywordsModal(true)}>Manage Keywords</Button>
+            <Modal
+                open={showKeywordsModal}
+                onCancel={() => setShowKeywordsModal(false)}
+                width='80vw'
+                footer={null}
+            >
+                <KeywordsManager />
+            </Modal>
+
             <h1>Scraped Posts</h1>
             <List
                 itemLayout="vertical"
