@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Spin, Modal, Alert, Card, List, Typography, Button } from 'antd';
+import { Tabs, Spin, Modal, Alert, Card, List, Typography, Button } from 'antd';
 import axios from 'axios';
 import DynamicContent from './DynamicContent';
 import DOMPurify from 'dompurify';
@@ -13,20 +13,23 @@ const PostList = () => {
     const [error, setError] = useState(null);
     const [showKeywordsModal, setShowKeywordsModal] = useState(false);
 
-    // Fetch grouped posts on mount
     useEffect(() => {
         const fetchPosts = async () => {
             setLoading(true);
             setError(null);
-            const token = localStorage.getItem('token'); // Retrieve token from local storage
+            const token = localStorage.getItem('token');
 
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_ROOT}/posts`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-                setPosts(response.data?.sort((a, b) => new Date(b.date) - new Date(a.date)));
+                const groupedPosts = response.data.reduce((acc, post) => {
+                    const date = post.date.split('T')[0]; // Extract date
+                    acc[date] = acc[date] || [];
+                    acc[date].push(post);
+                    return acc;
+                }, {});
+                setPosts(Object.entries(groupedPosts).sort((a, b) => new Date(b[0]) - new Date(a[0])));
             } catch (err) {
                 console.error('Error fetching posts:', err);
                 setError(err.message);
@@ -46,13 +49,8 @@ const PostList = () => {
         try {
             const response = await axios.get(
                 `${process.env.REACT_APP_API_ROOT}/posts/${date}/${filename}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
-            console.log(response.data);
             setSelectedPost({ content: response.data, date, filename, title });
         } catch (err) {
             console.error('Error fetching post content:', err);
@@ -68,20 +66,12 @@ const PostList = () => {
         const token = localStorage.getItem('token');
     
         try {
-            await axios.get(
+            const response = await axios.get(
                 `${process.env.REACT_APP_API_ROOT}/comments/${date}/post-${postId}-comments.html`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            ).then((response) => {
-                const sanitizedHtml = DOMPurify.sanitize(response.data);
-                setSelectedComments({ content: sanitizedHtml, date, postId });
-            }).catch((err) => {
-                console.error('Error fetching comments:', err);
-                setSelectedComments({ content: '', date, postId });
-            });
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const sanitizedHtml = DOMPurify.sanitize(response.data);
+            setSelectedComments({ content: sanitizedHtml, date, postId });
         } catch (err) {
             console.error('Error fetching comments:', err);
             setError(err.message);
@@ -89,12 +79,11 @@ const PostList = () => {
             setLoading(false);
         }
     };
-    
 
     if (loading && !posts.length) {
         return (
             <div style={{ textAlign: 'center', padding: '20px' }}>
-                <Spin tip="Loading posts..." />
+                <Spin />
             </div>
         );
     }
@@ -113,72 +102,64 @@ const PostList = () => {
             <Modal
                 open={showKeywordsModal}
                 onCancel={() => setShowKeywordsModal(false)}
-                width='80vw'
+                width="80vw"
                 footer={null}
             >
                 <KeywordsManager />
             </Modal>
 
             <h1>Scraped Posts</h1>
-            <List
-                itemLayout="vertical"
-                dataSource={posts}
-                renderItem={(group) => (
-                    <div key={group.date} style={{ marginBottom: '20px' }}>
-                        <h2>{group.date}</h2>
+            <Tabs>
+                {posts.map(([date, postsForDate]) => (
+                    <Tabs.TabPane tab={date} key={date}>
                         <List
-                            dataSource={group.posts}
-                            renderItem={(post) => (
-                                <List.Item onClick={() => {
-                                    viewPost(group.date, `post-${post.id}.html`, post.title)
-                                    viewComments(group.date, post.id)
-                                }}>
-                                    <Typography level={5}>{`${post.title} - ${post.date}`}</Typography>
+                            itemLayout="vertical"
+                            dataSource={postsForDate}
+                            renderItem={(posts) => {
+                                return posts?.posts?.map((post) => <List.Item
+                                    onClick={() => {
+                                        viewPost(date, `post-${post.id}.html`, post.title);
+                                        viewComments(date, post.id);
+                                    }}
+                                >
+                                    <Typography.Text>{post.title}</Typography.Text>
                                 </List.Item>
-                            )}
-                        />
-                    </div>
-                )}
-            />
 
+
+                            )}}
+
+                        />
+                    </Tabs.TabPane>
+                ))}
+            </Tabs>
 
             {loading && (
                 <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <Spin tip="Loading post content..." />
+                    <Spin />
                 </div>
             )}
 
-            {selectedPost && (<Modal
-                title={selectedPost.title}
-                open={selectedPost !== null}
-                onOk={() => setSelectedPost(null)}
-                onCancel={() => setSelectedPost(null)}
-                width='80vw'
-            >
-                <div style={{ marginTop: '20px' }}>
-                    <Card
-                        title={`${selectedPost.title} --- id: ${selectedPost.filename}`}
-                        bordered={true}
-                        style={{
-                            border: '1px solid #d9d9d9',
-                            borderRadius: '8px',
-                        }}
-                    >
-                        <div className="modal-content" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {selectedPost && (
+                <Modal
+                    title={selectedPost.title}
+                    open={selectedPost !== null}
+                    onOk={() => setSelectedPost(null)}
+                    onCancel={() => setSelectedPost(null)}
+                    width="80vw"
+                >
+                    <Card title={selectedPost.title} bordered style={{ borderRadius: '8px' }}>
+                        <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                             <DynamicContent htmlContent={selectedPost.content} />
-                            <div>
-                                <h2>Comments</h2>
-                                {selectedComments?.content ? (
-                                    <div dangerouslySetInnerHTML={{ __html: selectedComments.content }} />
-                                ) : (
-                                    <p>No comments available</p>
-                                )}
-                            </div>
-
+                            <h2>Comments</h2>
+                            {selectedComments?.content ? (
+                                <div dangerouslySetInnerHTML={{ __html: selectedComments.content }} />
+                            ) : (
+                                <p>No comments available</p>
+                            )}
                         </div>
                     </Card>
-                </div>
-            </Modal>)}
+                </Modal>
+            )}
         </div>
     );
 };
