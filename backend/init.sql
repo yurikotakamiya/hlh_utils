@@ -54,6 +54,14 @@ CREATE TABLE IF NOT EXISTS keywords (
     UNIQUE(word)
 );
 
+CREATE TABLE IF NOT EXISTS family_memos (
+    id SERIAL PRIMARY KEY,
+    memo TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    archive BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+
 -- To run this file in the database, use the following command:
 -- docker-compose exec db psql -U postgres -d mydatabase
 -- \i /docker-entrypoint-initdb.d/init.sql
