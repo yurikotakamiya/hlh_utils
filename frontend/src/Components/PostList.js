@@ -117,6 +117,7 @@ const PostList = () => {
                             dataSource={postsForDate}
                             renderItem={(posts) => {
                                 return posts?.posts?.map((post) => <List.Item
+                                    key={post.id}
                                     onClick={() => {
                                         viewPost(date, `post-${post.id}.html`, post.title);
                                         viewComments(date, post.id);
