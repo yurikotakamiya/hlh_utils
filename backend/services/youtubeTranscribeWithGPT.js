@@ -8,7 +8,7 @@ const axios = require('axios');
  */
 async function youtubeTranscribeWithGPT(transcript, model = 'gpt-3.5-turbo') {
     const prompt = `
-Summarize the following YouTube video transcript in a concise and informative way:
+Summarize the following YouTube video transcript in a concise and informative way in English
 ---
 ${transcript}
 ---
