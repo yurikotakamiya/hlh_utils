@@ -17,7 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^12.0.1",
     "pg": "^8.13.1",
-    "path": "^0.12.7"
+    "youtube-captions-scraper": "^2.0.3"
   },
   "scripts": {
     "start": "node server.js",

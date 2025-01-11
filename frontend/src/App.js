@@ -8,6 +8,7 @@ import PostList from './Components/PostList';
 import PrivateRoute from './Components/PrivateRoute';
 import ScoreSheet from './Components/ScoreSheet';
 import ScoreHeatmap from './Components/ScoreHeatmap';
+import YouTubeSummary from './Components/YouTubeSummary';
 import Layout from './Components/Layout';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
                     <Route path="post-list" element={<PrivateRoute element={PostList} />} />
                     <Route path="score-sheet" element={<PrivateRoute element={ScoreSheet} />} />
                     <Route path="score-heatmap" element={<PrivateRoute element={ScoreHeatmap} />} />
+                    <Route path="youtube-summary" element={<PrivateRoute element={YouTubeSummary} />} />
                 </Route>
             </Routes>
         </Router>

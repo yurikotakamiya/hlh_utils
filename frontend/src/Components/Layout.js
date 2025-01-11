@@ -18,6 +18,9 @@ const Layout = () => {
             <Menu.Item key="score-sheet" icon={<FileTextOutlined />} onClick={() => navigate('/score-sheet')}>
                 Score Sheet
             </Menu.Item>
+            <Menu.Item key="youtube-summary" icon={<FileTextOutlined />} onClick={() => navigate('/youtube-summary')}>
+                YouTube Summary
+            </Menu.Item>
             <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={logout}>
                 Logout
             </Menu.Item>
