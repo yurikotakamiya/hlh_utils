@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Select, message } from 'antd';
+import { Form, Input, Button, Select, Radio, message } from 'antd';
 import { AxiosWithAuth } from '../Utils/authenticationService';
 
 const { Option } = Select;
@@ -10,7 +10,7 @@ const YouTubeSummaryForm = () => {
     const [summary, setSummary] = useState('');
 
     const handleSubmit = async (values) => {
-        const { url, language } = values;
+        const { url, language, summarizer } = values;
         setLoading(true);
         setSummary('');
 
@@ -18,6 +18,7 @@ const YouTubeSummaryForm = () => {
             const response = await AxiosWithAuth.post(`${process.env.REACT_APP_API_ROOT}/youtube/summary`, {
                 url,
                 language,
+                summarizer, // Send the selected summarizer
             });
 
             setSummary(response.data.summary);
@@ -50,6 +51,17 @@ const YouTubeSummaryForm = () => {
                         <Option value="de">German</Option>
                         {/* Add more language options as needed */}
                     </Select>
+                </Form.Item>
+                <Form.Item
+                    label="Summarization Method"
+                    name="summarizer"
+                    initialValue="gpt"
+                    rules={[{ required: true, message: 'Please select a summarization method' }]}
+                >
+                    <Radio.Group>
+                        <Radio value="gpt">GPT (OpenAI)</Radio>
+                        <Radio value="ollama">Ollama</Radio>
+                    </Radio.Group>
                 </Form.Item>
                 <Form.Item>
                     <Button type="primary" htmlType="submit" loading={loading}>
