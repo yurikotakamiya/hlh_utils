@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button, Input, Typography, List } from 'antd';
-import axios from 'axios';
+import { AxiosWithAuth } from '../Utils/authenticationService';
 
 import { marked } from 'marked';
 
@@ -24,17 +24,10 @@ const ChatWithGpt = () => {
         setInput('');
         setLoading(true);
 
-        const token = localStorage.getItem('token');
-
         try {
-            const response = await axios.post(`${process.env.REACT_APP_API_ROOT}/chat`, {
+            const response = await AxiosWithAuth.post(`/chat`, {
                 message: input,
                 mode: use4o ? 'gpt-4o' : 'gpt-4o-mini'
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
             });
             const botMessage = { role: 'bot', content: marked(response.data.message) };
             setMessages([...messages, newMessage, botMessage]);

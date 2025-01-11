@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, Spin, Modal, Alert, Card, List, Typography, Button } from 'antd';
-import axios from 'axios';
+import { AxiosWithAuth } from '../Utils/authenticationService';
 import DynamicContent from './DynamicContent';
 import DOMPurify from 'dompurify';
 import KeywordsManager from './KeywordsManager';
@@ -17,12 +17,9 @@ const PostList = () => {
         const fetchPosts = async () => {
             setLoading(true);
             setError(null);
-            const token = localStorage.getItem('token');
 
             try {
-                const response = await axios.get(`${process.env.REACT_APP_API_ROOT}/posts`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const response = await AxiosWithAuth.get(`${process.env.REACT_APP_API_ROOT}/posts`);
                 const groupedPosts = response.data.reduce((acc, post) => {
                     const date = post.date.split('T')[0]; // Extract date
                     acc[date] = acc[date] || [];
@@ -44,13 +41,9 @@ const PostList = () => {
     const viewPost = async (date, filename, title) => {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.get(
-                `${process.env.REACT_APP_API_ROOT}/posts/${date}/${filename}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await AxiosWithAuth.get(`/posts/${date}/${filename}`);
             setSelectedPost({ content: response.data, date, filename, title });
         } catch (err) {
             console.error('Error fetching post content:', err);
@@ -63,13 +56,9 @@ const PostList = () => {
     const viewComments = async (date, postId) => {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem('token');
     
         try {
-            const response = await axios.get(
-                `${process.env.REACT_APP_API_ROOT}/comments/${date}/post-${postId}-comments.html`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await AxiosWithAuth.get(`/comments/${date}/post-${postId}-comments.html`);
             const sanitizedHtml = DOMPurify.sanitize(response.data);
             setSelectedComments({ content: sanitizedHtml, date, postId });
         } catch (err) {

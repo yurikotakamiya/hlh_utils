@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Input, message } from 'antd';
 import { AxiosWithAuth } from '../Utils/authenticationService';
-import axios from 'axios';
 
 const KeywordsManager = () => {
     const [keywords, setKeywords] = useState([]);
@@ -14,11 +13,7 @@ const KeywordsManager = () => {
 
     const fetchKeywords = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_API_ROOT}/keywords`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
+            const response = await AxiosWithAuth.get(`${process.env.REACT_APP_API_ROOT}/keywords`);
             setKeywords(response.data);
             setLoading(false);
         } catch (err) {

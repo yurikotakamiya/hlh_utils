@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, List, Form, Input, Button, Typography, message } from 'antd';
-import axios from 'axios';
+import { AxiosWithAuth } from '../Utils/authenticationService';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -11,19 +11,10 @@ const BulletinBoard = () => {
     const [loading, setLoading] = useState(true);
     const [form] = Form.useForm();
     const [formVisible, setFormVisible] = useState(false);
-    const token = localStorage.getItem('token');
 
-    const requestConfig = useMemo(
-        () => ({
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }),
-        [token]
-    );
     const fetchMemos = useCallback(async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_API_ROOT}/family-memos`, requestConfig);
+            const response = await AxiosWithAuth.get(`/family-memos`);
             setMemos(response.data);
         } catch (error) {
             console.error(error);
@@ -31,7 +22,7 @@ const BulletinBoard = () => {
         } finally {
             setLoading(false);
         }
-    }, [requestConfig]);
+    }, []);
 
     useEffect(() => {
         fetchMemos();
@@ -39,7 +30,7 @@ const BulletinBoard = () => {
 
     const handleAddMemo = async (values) => {
         try {
-            await axios.post(`${process.env.REACT_APP_API_ROOT}/family-memos`, values, requestConfig);
+            await AxiosWithAuth.post(`/family-memos`, values);
             form.resetFields();
             setFormVisible(false);
             fetchMemos();
@@ -52,7 +43,7 @@ const BulletinBoard = () => {
 
     const handleArchiveMemo = async (id) => {
         try {
-            await axios.put(`${process.env.REACT_APP_API_ROOT}/family-memos/${id}/archive`, {}, requestConfig);
+            await AxiosWithAuth.put(`/family-memos/${id}/archive`);
             setMemos(memos.filter((memo) => memo.id !== id));
             message.success('Memo archived successfully');
         } catch (error) {

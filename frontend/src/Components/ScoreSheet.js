@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Form,
     Input,
     InputNumber,
@@ -14,7 +14,6 @@ import { Form,
 import { SmileOutlined, DeleteOutlined } from '@ant-design/icons';
 import { AxiosWithAuth } from '../Utils/authenticationService';
 import ScoreHeatmap from './ScoreHeatmap';
-import axios from 'axios';
 import moment from 'moment';
 import locale from 'antd/es/date-picker/locale/en_US';
 moment.locale('en');
@@ -34,59 +33,57 @@ const ScoreSheet = () => {
 
     const userId = JSON.parse(localStorage.getItem('currentUser'))?.id;
     
-    // Fetch existing column names
+    const fetchScores = useCallback(async () => {
+        setScoreDataLoading(true); // Set loading state to true when fetching starts
+        try {
+            const scoreResponse = await AxiosWithAuth.get(`scores/${userId}`);
+            const scores = scoreResponse.data;
+    
+            const years = Array.from(new Set(scores.map((row) => new Date(row.date).getFullYear())));
+            setAvailableYears(years);
+            if (!years.includes(selectedYear)) {
+                setSelectedYear(new Date().getFullYear());
+            }
+    
+            const transformedData = scores.sort((a, b) => new Date(b.date) - new Date(a.date)).map((row) => ({
+                adjustedDate: row.date.split('T')[0],
+                count: Object.keys(row)
+                    .filter((key) => key.startsWith('col_'))
+                    .reduce((sum, key) => sum + row[key], 0),
+                comment: row.comment || '',
+                ...row, // Include the entire row for detailed list view
+            }));
+    
+            setScoreData(transformedData);
+        } catch (error) {
+            console.error('Error fetching scores:', error);
+        } finally {
+            setScoreDataLoading(false); // Reset loading state when fetching completes
+        }
+    }, [userId, selectedYear]);
+    
+    // Update the useEffect hook
     useEffect(() => {
         if (!userId) return;
-        const requestConfig = {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-        };
+    
         const fetchColumnNames = async () => {
             try {
-                await axios.get(`/scores/score-column-names/${userId}`, requestConfig)
-                    .then((response) => {
-                        const names = response.data.reduce((acc, { col_name, friendly_name }) => {
-                            acc[col_name] = friendly_name;
-                            return acc;
-                        }, {});
-                        setDisplayNames(names);
-                        columnForm.setFieldsValue(names); // Prefill the column names
-                    })
+                const response = await AxiosWithAuth.get(`/scores/score-column-names/${userId}`);
+                const names = response.data.reduce((acc, { col_name, friendly_name }) => {
+                    acc[col_name] = friendly_name;
+                    return acc;
+                }, {});
+                setDisplayNames(names);
+                columnForm.setFieldsValue(names); // Prefill the column names
             } catch (error) {
                 console.error('Error fetching column names:', error);
             }
         };
+    
         fetchColumnNames();
-        const fetchScores = async () => {
-            try {
-                const scoreResponse = await axios.get(`scores/${userId}`, requestConfig);
-                const scores = scoreResponse.data;
-
-                const years = Array.from(new Set(scores.map((row) => new Date(row.date).getFullYear())));
-                setAvailableYears(years);
-                if (!years.includes(selectedYear)) {
-                    setSelectedYear(new Date().getFullYear());
-                }
-
-                const transformedData = scores.sort((a, b) => new Date(b.date) - new Date(a.date)).map((row) => ({
-                    adjustedDate: row.date.split('T')[0],
-                    count: Object.keys(row)
-                        .filter((key) => key.startsWith('col_'))
-                        .reduce((sum, key) => sum + row[key], 0),
-                    comment: row.comment || '',
-                    ...row, // Include the entire row for detailed list view
-                }));
-
-                setScoreData(transformedData);
-            } catch (error) {
-                console.error('Error fetching scores:', error);
-            } finally {
-                setScoreDataLoading(false);
-            }
-        };
-        fetchScores();
-    }, [userId, columnForm, selectedYear]);
+        fetchScores(); // Fetch scores when the component mounts
+    }, [userId, columnForm, selectedYear, fetchScores]);
+    
 
     const handleScoreSubmit = async (values) => {
         try {
@@ -99,6 +96,7 @@ const ScoreSheet = () => {
             console.log(response.data);
             message.success('Scores submitted successfully.');
             form.resetFields();
+            await fetchScores(); 
         } catch (err) {
             console.error(err);
             message.error('Failed to submit scores.');

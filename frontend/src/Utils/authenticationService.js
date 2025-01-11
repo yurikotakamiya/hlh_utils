@@ -15,20 +15,36 @@ const configuredAxios = () => {
         baseURL: process.env.REACT_APP_API_ROOT,
         headers: {
             Accept: 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-    })
-    configured.interceptors.response.use(
-        res => res, // can run code on every response here in the future
-        error => {
-            if (error.response.status === 401) {
-                logout()
+        },
+    });
+
+    // Add a request interceptor to dynamically set the Authorization header
+    configured.interceptors.request.use(
+        (config) => {
+            const token = localStorage.getItem('token'); // Get the token dynamically
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
             }
-            return Promise.reject(error)
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
         }
-    )
-    return configured
-}
+    );
+
+    // Add a response interceptor to handle errors
+    configured.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response && error.response.status === 401) {
+                logout();
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return configured;
+};
 
 export const AxiosWithAuth = configuredAxios()
 

@@ -5,6 +5,7 @@ import axios from 'axios';
 import ChatWithGpt from './ChatWithGpt';
 import { LogoutOutlined } from '@ant-design/icons';
 import BulletinBoard from './BulletinBoard';
+import { AxiosWithAuth } from '../Utils/authenticationService';
 
 const { Title, Paragraph } = Typography;
 
@@ -32,13 +33,8 @@ const Home = () => {
     }, [navigate]);
 
     const handleLogout = async () => {
-        const token = localStorage.getItem('token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_ROOT}/auth/logout`, {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            await AxiosWithAuth.post(`/auth/logout`); // Call the logout endpoint
             localStorage.removeItem('token'); // Remove the token from localStorage
             navigate('/'); // Redirect to the login page
         } catch (error) {
