@@ -4,10 +4,14 @@ const ollama = require('../services/youtubeTranscribeWithOllama');
 const router = express.Router();
 
 router.post('/summary', async (req, res) => {
-    const { url } = req.body;
+    const { url, language } = req.body;
 
     if (!url) {
         return res.status(400).json({ error: 'YouTube URL is required' });
+    }
+
+    if (!language) {
+        return res.status(400).json({ error: 'Language code is required' });
     }
 
     try {
@@ -18,34 +22,25 @@ router.post('/summary', async (req, res) => {
 
         console.log('Extracted Video ID:', videoId);
 
-        // Predefined list of languages to try
-        const languageCodes = ['en', 'es', 'fr', 'de', 'zh', 'ja', 'ko']; // Add more as needed
-
+        // Fetch subtitles in the user-specified language
         let subtitles = null;
-
-        // Attempt to fetch subtitles in predefined languages
-        for (const lang of languageCodes) {
-            try {
-                subtitles = await getSubtitles({
-                    videoID: videoId,
-                    lang: lang,
-                });
-                if (subtitles && subtitles.length > 0) {
-                    console.log(`Fetched subtitles in language: ${lang}`);
-                    break; // Exit the loop if subtitles are found
-                }
-            } catch (error) {
-                console.warn(`Failed to fetch subtitles for language: ${lang}`);
+        try {
+            subtitles = await getSubtitles({
+                videoID: videoId,
+                lang: language,
+            });
+            if (!subtitles || subtitles.length === 0) {
+                return res.status(404).json({ error: `No subtitles found in the specified language: ${language}` });
             }
-        }
-
-        if (!subtitles || subtitles.length === 0) {
-            return res.status(404).json({ error: 'No subtitles could be fetched for the predefined languages.' });
+        } catch (error) {
+            console.error(`Failed to fetch subtitles for language: ${language}`, error);
+            return res.status(500).json({ error: `Failed to fetch subtitles for language: ${language}` });
         }
 
         // Combine subtitles into a single text block
         const transcript = subtitles.map((item) => item.text).join(' ');
         console.log('Combined Subtitles:', transcript);
+
         // Summarize with Ollama
         const summary = await ollama(transcript);
         res.status(200).json({ summary });

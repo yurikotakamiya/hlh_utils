@@ -1,68 +1,70 @@
 import React, { useState } from 'react';
-import { Input, Button, Card, Spin, message, Typography } from 'antd';
+import { Form, Input, Button, Select, message } from 'antd';
 import { AxiosWithAuth } from '../Utils/authenticationService';
 
-const { TextArea } = Input;
-const { Title } = Typography;
+const { Option } = Select;
 
-const YouTubeSummary = () => {
-    const [videoUrl, setVideoUrl] = useState('');
-    const [summary, setSummary] = useState('');
+const YouTubeSummaryForm = () => {
+    const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [summary, setSummary] = useState('');
 
-    const handleSummarize = async () => {
-        if (!videoUrl) {
-            message.error('Please enter a valid YouTube URL.');
-            return;
-        }
-
+    const handleSubmit = async (values) => {
+        const { url, language } = values;
         setLoading(true);
         setSummary('');
+
         try {
-            const response = await AxiosWithAuth.post(`/youtube/summary`, {
-                url: videoUrl,
+            const response = await AxiosWithAuth.post(`${process.env.REACT_APP_API_ROOT}/youtube/summary`, {
+                url,
+                language,
             });
+
             setSummary(response.data.summary);
+            message.success('Summary generated successfully!');
         } catch (error) {
-            console.error('Error summarizing video:', error);
-            message.error('Failed to summarize the video. Please try again.');
+            console.error('Error fetching summary:', error);
+            message.error('Failed to generate summary. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
-            <Card style={{ width: '60vw', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
-                <Title level={3} style={{ textAlign: 'center' }}>YouTube Video Summary</Title>
-                <Input
-                    placeholder="Paste YouTube video URL here"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    style={{ marginBottom: '20px' }}
-                />
-                <Button type="primary" onClick={handleSummarize} disabled={loading} block>
-                    Summarize
-                </Button>
-                {loading && (
-                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                        <Spin tip="Fetching and summarizing video..." />
-                    </div>
-                )}
-                {summary && (
-                    <Card style={{ marginTop: '20px', backgroundColor: '#f9f9f9' }}>
-                        <Title level={4}>Summary:</Title>
-                        <TextArea
-                            rows={10}
-                            value={summary}
-                            readOnly
-                            style={{ resize: 'none', backgroundColor: '#f9f9f9', border: 'none' }}
-                        />
-                    </Card>
-                )}
-            </Card>
+        <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
+            <Form form={form} onFinish={handleSubmit} layout="vertical">
+                <Form.Item
+                    label="YouTube URL"
+                    name="url"
+                    rules={[{ required: true, message: 'Please enter a YouTube URL' }]}
+                >
+                    <Input placeholder="Enter YouTube video URL" />
+                </Form.Item>
+                <Form.Item label="Subtitle Language" name="language">
+                    <Select placeholder="Select a language (default: English)">
+                        <Option value="en">English</Option>
+                        <Option value="ko">Korean</Option>
+                        <Option value="ja">Japanese</Option>
+                        <Option value="es">Spanish</Option>
+                        <Option value="fr">French</Option>
+                        <Option value="de">German</Option>
+                        {/* Add more language options as needed */}
+                    </Select>
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading}>
+                        Summarize Video
+                    </Button>
+                </Form.Item>
+            </Form>
+            {summary && (
+                <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #d9d9d9', borderRadius: '8px' }}>
+                    <h3>Summary:</h3>
+                    <p>{summary}</p>
+                </div>
+            )}
         </div>
     );
 };
 
-export default YouTubeSummary;
+export default YouTubeSummaryForm;
