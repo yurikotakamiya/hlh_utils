@@ -27,7 +27,7 @@ const ChatWithGpt = () => {
         try {
             const response = await AxiosWithAuth.post(`/chat`, {
                 message: input,
-                mode: use4o ? 'gpt-4o' : 'gpt-4o-mini'
+                mode: use4o ? 'o1-preview' : 'gpt-4o-2024-11-20'
             });
             const botMessage = { role: 'bot', content: marked(response.data.message) };
             setMessages([...messages, newMessage, botMessage]);
