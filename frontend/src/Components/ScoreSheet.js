@@ -70,7 +70,9 @@ const ScoreSheet = () => {
             try {
                 const response = await AxiosWithAuth.get(`/scores/score-column-names/${userId}`);
                 const names = response.data.reduce((acc, { col_name, friendly_name }) => {
-                    acc[col_name] = friendly_name;
+                    if (friendly_name.length > 0) {   
+                        acc[col_name] = friendly_name;
+                    }
                     return acc;
                 }, {});
                 setDisplayNames(names);
@@ -115,6 +117,7 @@ const ScoreSheet = () => {
             });
             message.success('Column names updated successfully.');
             setDisplayNames(columnNames); // Update local state
+            await fetchScores();
         } catch (err) {
             console.error(err);
             message.error('Failed to update column names.');
