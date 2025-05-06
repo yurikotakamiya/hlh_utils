@@ -135,6 +135,46 @@ const ScoreSheet = () => {
         }
     };
 
+    const handleDownloadCSV = () => {
+        try {
+            if (!scoreData || scoreData.length === 0) {
+                message.warning('No data available to download.');
+                return;
+            }
+    
+            // Extract column headers
+            const headers = ['Date', ...Object.values(displayNames), 'Comment'];
+            
+            // Generate CSV rows
+            const rows = scoreData.map((row) => {
+                const rowData = [
+                    row.adjustedDate, // Date
+                    ...Object.keys(displayNames).map((col) => row[col] || ''), // Dynamic columns
+                    row.comment || '', // Comment
+                ];
+                return rowData.join(','); // Join row values with commas
+            });
+    
+            // Combine headers and rows
+            const csvContent = [headers.join(','), ...rows].join('\n');
+    
+            // Create a Blob and trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `score_data_${selectedYear}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+    
+            message.success('CSV file downloaded successfully.');
+        } catch (error) {
+            console.error('Error generating CSV:', error);
+            message.error('Failed to download CSV.');
+        }
+    };
+    
     const columns = [
         {
             title: '',
@@ -170,7 +210,9 @@ const ScoreSheet = () => {
     return (
         <div style={{ padding: '20px' }}>
             <Title level={2}>Score Sheet</Title>
-
+            <Button type="primary" onClick={handleDownloadCSV} style={{ marginBottom: '20px' }}>
+                Download CSV
+            </Button>
             <Tabs defaultActiveKey="heatmap">
                 <Tabs.TabPane tab="Heatmap View" key="heatmap">
                     <ScoreHeatmap
