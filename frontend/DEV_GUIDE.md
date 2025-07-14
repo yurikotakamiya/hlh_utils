@@ -67,9 +67,9 @@ docker exec -it hlh_utils-db-1 psql -U postgres -d mydatabase
 
 ---
 
-## 📦 Data Processing (2ch Content)
+## 📦 Data Processing (Forum Content)
 
-To manually trigger ingestion inside the container:
+To manually trigger content ingestion inside the container:
 
 ```bash
 docker exec -it hlh_utils-backend-1 node scripts/fetchPosts.js
@@ -79,6 +79,6 @@ docker exec -it hlh_utils-backend-1 node scripts/fetchPosts.js
 
 ## 🔁 Notes
 
-- All ingestion jobs are scheduled via Jenkins in `jenkins/`
-- All scraped content is saved to `data/` folder in HTML + JSON format
-- Logs and runtime metadata stored inside respective container folders
+- Ingestion jobs are scheduled via Jenkins in the `jenkins/` directory
+- Scraped data is saved to the `data/` folder in HTML and JSON format
+- Logs and runtime metadata are stored inside the appropriate containers
